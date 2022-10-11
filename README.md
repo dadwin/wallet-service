@@ -10,6 +10,7 @@ WalletService provides a fund transfer solution across MovileWallet's user base.
 2. 'amount' is an integer, not to hassle with cents for simplicity.
 3. No double-entry accounting, more simple data model
 4. No notification (but it's a good feature proposal - notify users about received money transfer)
+5. 'user_id' is a string, like username or email.
 
 ### Technical
 1. No User and Auth service, I assume there is sessions stored in redis (populates manually)
