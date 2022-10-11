@@ -1,6 +1,6 @@
 import pytest
 from sqlalchemy.orm import Session
-from app import services, schemas
+from app import models, services, schemas
 
 
 def test_create_transfer_no_sender(db: Session):
@@ -13,6 +13,10 @@ def test_create_transfer_no_sender(db: Session):
 
 
 def test_create_transfer_no_receiver(db: Session):
+
+    db.add(models.Account(user_id="yunus", name="current"))
+    db.commit()
+
     cmd = schemas.TransferCommand(amount=10,
                                   message="the first money transfer",
                                   receiver_id="andrew")

@@ -19,5 +19,6 @@ class TransferInfo(BaseModel):
 
 class TransferCommand(BaseModel):
     amount: int
+    # currency_code: str
     message: str
     receiver_id: str
