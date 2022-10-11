@@ -58,6 +58,10 @@ def test_create_transfer_too_big_amount(db: Session):
 
 
 def test_create_transfer_no_funds(db: Session):
+    db.add(models.Account(user_id="yunus", name="current"))
+    db.add(models.Account(user_id="andrew", name="current"))
+    db.commit()
+
     cmd = schemas.TransferCommand(amount=10000,
                                   message="the first money transfer",
                                   receiver_id="andrew")

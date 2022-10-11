@@ -30,6 +30,12 @@ AMOUNT_MAX = 1000000
 
 
 def create_transfer(db: Session, user_id: str, cmd: schemas.TransferCommand):
+    if cmd.amount <= 0:
+        raise NegativeAmountError
+
+    if cmd.amount >= AMOUNT_MAX:
+        raise TooBigAmountError
+
     with db:
         sender_account = db.query(models.Account).filter(models.Account.user_id == user_id).first()
         if not sender_account:
@@ -39,10 +45,20 @@ def create_transfer(db: Session, user_id: str, cmd: schemas.TransferCommand):
         if not receiver_account:
             raise NoReceiverError(f"no account for receiver {cmd.receiver_id}")
 
+        if get_account_balance(db, sender_account.id) < cmd.amount:
+            raise InsufficientFundsError
+
 
 def get_transfers(db: Session, user_id: str, skip: int = 0, limit: int = 100):
     pass
 
 
-def get_account_balance(user_id: str):
+def get_account_balance(db: Session, account_id: int):
+    balance = 0
+    for trx in db.query(models.Transaction).filter(models.Transaction.account_id == account_id).all():
+        balance += trx.amount
+    return balance
+
+
+def get_account_balance_by_user(db: Session, user_id: str):
     pass

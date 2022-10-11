@@ -10,4 +10,4 @@ router = APIRouter()
 @router.get("/balance", response_model=schemas.AccountBalance)
 def get_account_balance(db: Session = Depends(get_db),
                         user: str = Depends(get_user_by_token)):
-    return services.get_account_balance(user)
+    return services.get_account_balance_by_user(db, user)
