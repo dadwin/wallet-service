@@ -13,7 +13,6 @@ def test_create_transfer_no_sender(db: Session):
 
 
 def test_create_transfer_no_receiver(db: Session):
-
     db.add(models.Account(user_id="yunus", name="current"))
     db.commit()
 
@@ -25,31 +24,19 @@ def test_create_transfer_no_receiver(db: Session):
         services.create_transfer(db, "yunus", cmd)
 
 
-def test_create_transfer_negative_amount(db: Session):
-    cmd = schemas.TransferCommand(amount=0,
+@pytest.mark.parametrize("amount", [0, -1, -100])
+def test_create_transfer_negative_amount(db: Session, amount: int):
+    cmd = schemas.TransferCommand(amount=amount,
                                   message="the first money transfer",
                                   receiver_id="andrew")
 
     with pytest.raises(services.NegativeAmountError):
         services.create_transfer(db, "yunus", cmd)
 
-    cmd = schemas.TransferCommand(amount=-10,
-                                  message="the first money transfer",
-                                  receiver_id="andrew")
 
-    with pytest.raises(services.NegativeAmountError):
-        services.create_transfer(db, "yunus", cmd)
-
-
-def test_create_transfer_too_big_amount(db: Session):
-    cmd = schemas.TransferCommand(amount=services.AMOUNT_MAX,
-                                  message="the first money transfer",
-                                  receiver_id="andrew")
-
-    with pytest.raises(services.TooBigAmountError):
-        services.create_transfer(db, "yunus", cmd)
-
-    cmd = schemas.TransferCommand(amount=services.AMOUNT_MAX + 1,
+@pytest.mark.parametrize("amount", [services.AMOUNT_MAX, services.AMOUNT_MAX + 1, services.AMOUNT_MAX + 100])
+def test_create_transfer_too_big_amount(db: Session, amount: int):
+    cmd = schemas.TransferCommand(amount=amount,
                                   message="the first money transfer",
                                   receiver_id="andrew")
 
@@ -57,12 +44,13 @@ def test_create_transfer_too_big_amount(db: Session):
         services.create_transfer(db, "yunus", cmd)
 
 
-def test_create_transfer_no_funds(db: Session):
+@pytest.mark.parametrize("amount", [1, 543, 25646])
+def test_create_transfer_no_funds(db: Session, amount: int):
     db.add(models.Account(user_id="yunus", name="current"))
     db.add(models.Account(user_id="andrew", name="current"))
     db.commit()
 
-    cmd = schemas.TransferCommand(amount=10000,
+    cmd = schemas.TransferCommand(amount=amount,
                                   message="the first money transfer",
                                   receiver_id="andrew")
 
@@ -71,6 +59,10 @@ def test_create_transfer_no_funds(db: Session):
 
 
 def test_create_transfer(db: Session):
+    db.add(models.Account(user_id="yunus", name="current"))
+    db.add(models.Account(user_id="andrew", name="current"))
+
+    db.commit()
 
     cmd = schemas.TransferCommand(amount=100,
                                   message="the first money transfer",
@@ -80,5 +72,3 @@ def test_create_transfer(db: Session):
 
     sender_account = services.get_account_balance("yunus")
     receiver_account = services.get_account_balance("andrew")
-
-
