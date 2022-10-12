@@ -1,9 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from app.internal.config import settings
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:password@postgress/wallet"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, echo=True,
-)
+engine = create_engine(settings.SQLALCHEMY_DATABASE_URI, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
