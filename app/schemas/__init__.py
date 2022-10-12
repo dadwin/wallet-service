@@ -7,6 +7,8 @@ class AccountBalance(BaseModel):
     name: str
     user_id: str
     amount: int
+    created_at: datetime
+    updated_at: datetime
 
 
 class TransferInfo(BaseModel):

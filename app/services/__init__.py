@@ -92,12 +92,14 @@ def get_transfers(db: Session, user_id: str, skip: int = 0, limit: int = 100) ->
                                  ) for trx in transactions]
 
 
-def get_account_balance(db: Session, account_id: int):
-    balance = 0
-    for trx in db.query(models.Transaction).filter(models.Transaction.account_id == account_id).all():
-        balance += trx.amount
-    return balance
-
-
-def get_account_balance_by_user(db: Session, user_id: str):
-    pass
+def get_account_balance_by_user(db: Session, user_id: str) -> schemas.AccountBalance:
+    account = db.query(models.Account).filter(models.Account.user_id == user_id).first()
+    if not account:
+        raise NoUserAccountError(f"no account for user {user_id}")
+    return schemas.AccountBalance(account_id=account.id,
+                                  user_id=account.user_id,
+                                  amount=account.amount,
+                                  name=account.name,
+                                  created_at=account.created_at,
+                                  updated_at=account.updated_at,
+                                  )
