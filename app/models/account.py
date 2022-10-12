@@ -1,10 +1,10 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, DECIMAL, String
-from sqlalchemy.orm import relationship
+from sqlalchemy import Column, Integer, String
 
+from app.models.mixins import TrackTimeMixin
 from app.models.base_class import Base
 
 
-class Account(Base):
+class Account(Base, TrackTimeMixin):
     __tablename__ = "accounts"
 
     id = Column(Integer, primary_key=True, index=True)

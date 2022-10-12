@@ -57,16 +57,18 @@ def create_transfer(db: Session, user_id: str, cmd: schemas.TransferCommand) -> 
     receiver_account.amount += cmd.amount
     db.add(sender_account)
     db.add(receiver_account)
-    db.add(models.Transaction(amount=cmd.amount,
-                              message=cmd.message,
-                              sender_id=sender_account.id,
-                              receiver_id=receiver_account.id))
-
+    trx = models.Transaction(amount=cmd.amount,
+                             message=cmd.message,
+                             sender_id=sender_account.id,
+                             receiver_id=receiver_account.id)
+    db.add(trx)
     db.commit()
+    db.refresh(trx)
     return schemas.TransferInfo(sender_id=user_id,
                                 receiver_id=cmd.receiver_id,
                                 amount=cmd.amount,
-                                message=cmd.message)
+                                message=cmd.message,
+                                created_at=trx.created_at)
 
 
 def get_transfers(db: Session, user_id: str, skip: int = 0, limit: int = 100) -> List[schemas.TransferInfo]:
@@ -86,6 +88,7 @@ def get_transfers(db: Session, user_id: str, skip: int = 0, limit: int = 100) ->
                                  receiver_id=trx.receiver_account.user_id,
                                  amount=trx.amount,
                                  message=trx.message,
+                                 created_at=trx.created_at,
                                  ) for trx in transactions]
 
 
