@@ -13,3 +13,6 @@ class Transaction(Base):
     sender_id = Column(Integer, ForeignKey("accounts.id"), index=True)
     receiver_id = Column(Integer, ForeignKey("accounts.id"), index=True)
     created_at = Column(DateTime)
+
+    sender_account = relationship("Account", foreign_keys=[sender_id])
+    receiver_account = relationship("Account", foreign_keys=[receiver_id])

@@ -1,3 +1,5 @@
+from typing import List
+
 from app import schemas, models
 from sqlalchemy.orm import Session
 
@@ -26,10 +28,14 @@ class InsufficientFundsError(ErrorBase):
     """Sender has insufficient funds"""
 
 
+class NoUserAccountError(ErrorBase):
+    """"""
+
+
 AMOUNT_MAX = 1000000
 
 
-def create_transfer(db: Session, user_id: str, cmd: schemas.TransferCommand):
+def create_transfer(db: Session, user_id: str, cmd: schemas.TransferCommand) -> schemas.TransferInfo:
     if cmd.amount <= 0:
         raise NegativeAmountError
 
@@ -57,10 +63,30 @@ def create_transfer(db: Session, user_id: str, cmd: schemas.TransferCommand):
                               receiver_id=receiver_account.id))
 
     db.commit()
+    return schemas.TransferInfo(sender_id=user_id,
+                                receiver_id=cmd.receiver_id,
+                                amount=cmd.amount,
+                                message=cmd.message)
 
 
-def get_transfers(db: Session, user_id: str, skip: int = 0, limit: int = 100):
-    pass
+def get_transfers(db: Session, user_id: str, skip: int = 0, limit: int = 100) -> List[schemas.TransferInfo]:
+    user_account = db.query(models.Account).filter(models.Account.user_id == user_id).first()
+    if not user_account:
+        raise NoUserAccountError
+
+    transactions = db. \
+        query(models.Transaction). \
+        filter((models.Transaction.sender_id == user_account.id) | (models.Transaction.receiver_id == user_account.id)). \
+        order_by(models.Transaction.created_at.desc()). \
+        offset(skip). \
+        limit(limit). \
+        all()
+
+    return [schemas.TransferInfo(sender_id=trx.sender_account.user_id,
+                                 receiver_id=trx.receiver_account.user_id,
+                                 amount=trx.amount,
+                                 message=trx.message,
+                                 ) for trx in transactions]
 
 
 def get_account_balance(db: Session, account_id: int):
