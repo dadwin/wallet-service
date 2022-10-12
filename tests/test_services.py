@@ -3,6 +3,10 @@ from sqlalchemy.orm import Session
 from app import models, services, schemas
 
 
+def test_conftest(db: Session):
+    pass
+
+
 def test_create_transfer_no_sender(db: Session):
     cmd = schemas.TransferCommand(amount=10,
                                   message="the first money transfer",
@@ -13,7 +17,7 @@ def test_create_transfer_no_sender(db: Session):
 
 
 def test_create_transfer_no_receiver(db: Session):
-    db.add(models.Account(user_id="yunus", name="current"))
+    db.add(models.Account(user_id="yunus", name="current", amount=0))
     db.commit()
 
     cmd = schemas.TransferCommand(amount=10,
@@ -46,8 +50,8 @@ def test_create_transfer_too_big_amount(db: Session, amount: int):
 
 @pytest.mark.parametrize("amount", [1, 543, 25646])
 def test_create_transfer_no_funds(db: Session, amount: int):
-    db.add(models.Account(user_id="yunus", name="current"))
-    db.add(models.Account(user_id="andrew", name="current"))
+    db.add(models.Account(user_id="yunus", name="current", amount=0))
+    db.add(models.Account(user_id="andrew", name="current", amount=0))
     db.commit()
 
     cmd = schemas.TransferCommand(amount=amount,
@@ -59,16 +63,39 @@ def test_create_transfer_no_funds(db: Session, amount: int):
 
 
 def test_create_transfer(db: Session):
-    db.add(models.Account(user_id="yunus", name="current"))
-    db.add(models.Account(user_id="andrew", name="current"))
-
+    sender_uid = "yunus"
+    receiver_uid = "andrew"
+    sender_account = models.Account(user_id=sender_uid, name="current", amount=1)
+    receiver_account = models.Account(user_id=receiver_uid, name="current", amount=0)
+    db.add(sender_account)
+    db.add(receiver_account)
     db.commit()
 
-    cmd = schemas.TransferCommand(amount=100,
+    cmd = schemas.TransferCommand(amount=1,
                                   message="the first money transfer",
-                                  receiver_id="andrew")
+                                  receiver_id=receiver_uid)
+    services.create_transfer(db, sender_uid, cmd)
+    db.refresh(sender_account)
+    db.refresh(receiver_account)
+    assert sender_account.amount == 0
+    assert receiver_account.amount == 1
+    trxs = db.query(models.Transaction).all()
+    assert len(trxs) == 1
+    assert trxs[0].amount == cmd.amount
+    assert trxs[0].sender_id == sender_account.id
+    assert trxs[0].receiver_id == receiver_account.id
+    assert trxs[0].message == cmd.message
 
-    services.create_transfer(db, "yunus", cmd)
 
-    sender_account = services.get_account_balance("yunus")
-    receiver_account = services.get_account_balance("andrew")
+@pytest.mark.skip
+def test_deadlock():
+    from app.internal.database import SessionLocal, engine
+    from app.models.base import Base
+    Base.metadata.create_all(bind=engine)
+
+    db = SessionLocal()  # type: Session
+    db.execute("select * from accounts;")
+
+    with SessionLocal() as db1:
+        db1.execute("drop table accounts;")
+        db1.commit()
