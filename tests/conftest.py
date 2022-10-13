@@ -1,13 +1,10 @@
-from typing import Dict, Generator
+from typing import Generator
 
 import pytest
 import sqlalchemy
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
 
 from app.models.base import Base
 from app.internal.database import SessionLocal, engine
-from app.main import app
 
 Base.metadata.drop_all(bind=engine)
 Base.metadata.create_all(bind=engine)
