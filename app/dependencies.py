@@ -3,7 +3,10 @@ from fastapi import Header
 from app.internal.database import SessionLocal
 
 users = {
-    "thunes": "yunus"
+    "yunus": "yunus",
+    "nick": "nick",
+    "house": "house",
+    "andrew": "andrew",
 }
 
 
